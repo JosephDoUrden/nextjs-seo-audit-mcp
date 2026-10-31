@@ -1,0 +1,54 @@
+{
+  "name": "vercel-seo-audit-mcp",
+  "version": "0.1.0",
+  "description": "Read-only MCP server (stdio) for vercel-seo-audit: audit a deployed site for SEO and indexing issues from an agent",
+  "type": "module",
+  "mcpName": "io.github.JosephDoUrden/vercel-seo-audit",
+  "bin": {
+    "vercel-seo-audit-mcp": "./bin/vercel-seo-audit-mcp.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "server.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node bin/vercel-seo-audit-mcp.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json",
+    "lint": "tsc --noEmit && tsc --noEmit -p tsconfig.test.json"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "seo",
+    "audit",
+    "vercel",
+    "nextjs"
+  ],
+  "author": "JosephDoUrden",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JosephDoUrden/vercel-seo-audit-mcp.git"
+  },
+  "homepage": "https://github.com/JosephDoUrden/vercel-seo-audit-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/JosephDoUrden/vercel-seo-audit-mcp/issues"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.0",
+    "vercel-seo-audit": "^2.17.0",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.5"
+  }
+}
