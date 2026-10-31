@@ -10,7 +10,8 @@
   "files": [
     "dist",
     "bin",
-    "server.json"
+    "server.json",
+    "npm-shrinkwrap.json"
   ],
   "scripts": {
     "build": "tsc",
