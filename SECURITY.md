@@ -28,8 +28,8 @@ public disclosure.
 - `audit_site` makes outbound requests to the URL it is given. Private and local addresses are
   refused unless `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE=1`; DNS rebinding is a known gap, described in
   the README.
-- Results are content from a third-party site. They are cleaned of control and bidi characters and
-  capped, but a client must still treat them as data.
+- Results are content from a third-party site. They are cleaned of control and format characters
+  (bidi, zero-width, tags) and capped, but a client must still treat them as data.
 - `@modelcontextprotocol/sdk` is held at `^1.32.0` or newer. 1.32.0 fixes five advisories
   published on 20 Oct 2026, and 1.31.0 fixed CVE-2026-104850. A lower floor would let `npm install`
   resolve a vulnerable SDK.

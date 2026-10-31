@@ -5,7 +5,7 @@ import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js';
 import { createServer } from '../src/server.js';
 
 /** Right-to-left override, bell and start-of-heading: what a hostile title might carry. */
-export const HOSTILE_TITLE = 'Shop ‮exe.txt\u0007\u0001 home';
+export const HOSTILE_TITLE = 'Shop \u202eexe.txt\u0007\u0001 home';
 
 export function page(opts: { title?: string | null } = {}): string {
   const title = opts.title === undefined ? HOSTILE_TITLE : opts.title;
@@ -77,8 +77,8 @@ export async function connectClient(): Promise<{ client: Client; close(): Promis
   };
 }
 
-// C0 controls, DEL, C1 controls, and bidi marks, embeddings, overrides and isolates.
-export const UNSAFE = /[\u0000-\u001f\u007f-\u009f‎‏؜‪-‮⁦-⁩]/;
+// C0 controls, DEL, C1 controls, format characters (Cf: bidi, zero-width, BOM, tags) and U+2028/2029.
+export const UNSAFE = /[\u0000-\u001f\u007f-\u009f\u2028\u2029\p{Cf}\u{E0000}-\u{E007F}]/u;
 
 /** Every string in a JSON-shaped value, keys included. */
 export function allStrings(value: unknown): string[] {

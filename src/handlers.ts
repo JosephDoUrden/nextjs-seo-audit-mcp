@@ -20,7 +20,15 @@ import type {
 } from 'vercel-seo-audit';
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { checkTarget } from './guard.js';
-import { UNTRUSTED_NOTICE, capFinding, cleanDeep } from './sanitise.js';
+import {
+  MAX_TEXT_CHARS,
+  MAX_URL_CHARS,
+  UNTRUSTED_NOTICE,
+  capDetails,
+  capFinding,
+  cleanDeep,
+  cleanString,
+} from './sanitise.js';
 import { LIMITS, type PreviousReport, type USER_AGENTS } from './tools.js';
 
 // Copied from USER_AGENT_PRESETS in vercel-seo-audit's src/constants.ts (2.17.0), which the
@@ -30,6 +38,11 @@ const USER_AGENT_STRINGS: Record<(typeof USER_AGENTS)[number], string | undefine
   googlebot: 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
   bingbot: 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
 };
+
+// `maxHtmlBytes` is coming to RunAuditOptions in a vercel-seo-audit release after 2.17.0.
+// The intersection compiles against either version, and 2.17.0 ignores the key at run time,
+// where its own 10 MiB cap applies instead.
+type AuditOptions = RunAuditOptions & { maxHtmlBytes?: number };
 
 export interface AuditSiteArgs {
   url: string;
@@ -57,10 +70,14 @@ function structured(value: Record<string, unknown>, notice?: string): CallToolRe
   };
 }
 
+/** A URL as both sides of the diff key it: cleaned the way the output is, and capped. */
+const diffUrl = (url: string) => cleanString(url, MAX_URL_CHARS);
+
 /**
  * Turns an earlier AgentReport back into the AuditReport shape diffReports reads. Findings
  * are matched by `code::url`, so only those fields have to be right; the modules the earlier
  * run skipped become its `only`, so a module only one run had is neither new nor resolved.
+ * Every string is cleaned and capped like the output, since the caller sent it.
  */
 export function previousToAuditReport(prev: PreviousReport): AuditReport {
   const byModule = new Map<string, AuditFinding[]>();
@@ -68,20 +85,21 @@ export function previousToAuditReport(prev: PreviousReport): AuditReport {
     const finding: AuditFinding = {
       code: f.code,
       severity: f.severity,
-      category: f.category as AuditFinding['category'],
-      message: f.message,
+      category: cleanString(f.category, MAX_TEXT_CHARS) as AuditFinding['category'],
+      message: cleanString(f.message, MAX_TEXT_CHARS),
       explanation: '',
-      suggestion: f.fix ?? '',
-      ...(f.details && { details: f.details }),
-      ...(f.url !== null && { url: f.url }),
+      suggestion: f.fix === null ? '' : cleanString(f.fix, MAX_TEXT_CHARS),
+      ...(f.details && { details: capDetails(f.details) as Record<string, unknown> }),
+      ...(f.url !== null && { url: diffUrl(f.url) }),
     };
-    const list = byModule.get(f.module) ?? [];
+    const module = cleanString(f.module, MAX_TEXT_CHARS);
+    const list = byModule.get(module) ?? [];
     list.push(finding);
-    byModule.set(f.module, list);
+    byModule.set(module, list);
   }
   const skipped = new Set<string>(prev.skipped);
   return {
-    url: prev.url,
+    url: diffUrl(prev.url),
     timestamp: new Date(0).toISOString(),
     duration: 0,
     summary: { errors: prev.summary.errors, warnings: prev.summary.warnings, info: prev.summary.info, passed: 0 },
@@ -90,19 +108,49 @@ export function previousToAuditReport(prev: PreviousReport): AuditReport {
   };
 }
 
-// buildAgentReport already caps message and fix at 500 characters and strips control and
-// bidi characters (vercel-seo-audit 2.17.0). This second pass is defence in depth, so a
-// regression there, or a field it does not cover, still does not reach the model.
+/**
+ * The current report as diffReports should see it. `only` is set to the modules that ran,
+ * because a full run without `crawl` has no `only` and would otherwise count every crawl
+ * finding in `previous` as resolved. URLs are cleaned like `previous`'s were, so a URL with
+ * a stripped character is not both new and resolved.
+ */
+export function currentForDiff(report: AuditReport): AuditReport {
+  const ran = report.modules.map((m) => m.module).filter((m): m is ModuleId => m !== 'target');
+  return {
+    ...report,
+    modules: report.modules.map((m) => ({
+      ...m,
+      findings: m.findings.map((f) => (f.url === undefined ? f : { ...f, url: diffUrl(f.url) })),
+    })),
+    only: ran,
+  };
+}
+
+// buildAgentReport already caps message and fix at 500 characters and strips some control
+// and bidi characters (vercel-seo-audit 2.17.0). This second pass is defence in depth, so a
+// regression there, or a field or character it does not cover, still does not reach the model.
 function cleanReport(report: AgentReport): AgentReport {
   const cleaned = cleanDeep(report) as AgentReport;
   const capAll = (list: AgentFinding[]) => list.map(capFinding);
   return {
     ...cleaned,
+    url: cleanString(cleaned.url, MAX_URL_CHARS),
+    finalUrl: cleaned.finalUrl === null ? null : cleanString(cleaned.finalUrl, MAX_URL_CHARS),
     findings: capAll(cleaned.findings),
     ...(cleaned.diff && {
       diff: { ...cleaned.diff, new: capAll(cleaned.diff.new), resolved: capAll(cleaned.diff.resolved) },
     }),
   };
+}
+
+/** Settles with `promise`, or rejects with the signal's reason as soon as it fires. */
+function abortable<T>(promise: Promise<T>, signal: AbortSignal): Promise<T> {
+  if (signal.aborted) return Promise.reject(signal.reason);
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => reject(signal.reason);
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(resolve, reject).finally(() => signal.removeEventListener('abort', onAbort));
+  });
 }
 
 let inFlight = false;
@@ -117,16 +165,15 @@ export async function auditSite(args: AuditSiteArgs, opts: { signal?: AbortSigna
   inFlight = true;
   try {
     if (args.url.length > LIMITS.urlMaxChars) return toolError(`url is longer than ${LIMITS.urlMaxChars} characters`);
-    const target = await checkTarget(args.url);
-    if (!target.ok) return toolError(`refused: ${target.reason}`);
 
     const crawl = args.crawl === undefined ? undefined : clamp(args.crawl, LIMITS.crawlMin, LIMITS.crawlMax);
     const timeout = clamp(args.timeout ?? LIMITS.timeoutDefaultMs, LIMITS.timeoutMinMs, LIMITS.timeoutMaxMs);
     const wallClockMs = LIMITS.wallClockBaseMs + LIMITS.wallClockPerPageMs * (crawl ?? 0);
+    // Made before the DNS pre-check, so a resolver that hangs is inside the same cap.
     const signals = [AbortSignal.timeout(wallClockMs), ...(opts.signal ? [opts.signal] : [])];
     const signal = AbortSignal.any(signals);
 
-    const auditOptions: RunAuditOptions = {
+    const auditOptions: AuditOptions = {
       timeout,
       crawl,
       userAgent: args.userAgent ? USER_AGENT_STRINGS[args.userAgent] : undefined,
@@ -135,13 +182,17 @@ export async function auditSite(args: AuditSiteArgs, opts: { signal?: AbortSigna
       // Since vercel-seo-audit 2.17.0 this aborts every request in flight and runAudit
       // rejects with an AbortError, so the slot below is free again straight away.
       signal,
+      maxHtmlBytes: LIMITS.maxHtmlBytes,
     };
 
     let report: AuditReport;
     try {
+      // A lookup left running after an abort finishes on its own; its answer is dropped.
+      const target = await abortable(checkTarget(args.url), signal);
+      if (!target.ok) return toolError(`refused: ${target.reason}`);
       report = await runAudit(target.url.href, auditOptions);
     } catch (err) {
-      if (!(err instanceof Error && err.name === 'AbortError') && !signal.aborted) throw err;
+      if (!signal.aborted) throw err;
       if (opts.signal?.aborted) return toolError('audit cancelled');
       return toolError(`audit timed out after ${wallClockMs / 1000} s`);
     }
@@ -151,17 +202,20 @@ export async function auditSite(args: AuditSiteArgs, opts: { signal?: AbortSigna
     let agent: AgentReport;
     if (args.previous) {
       const previous = previousToAuditReport(args.previous);
-      agent = buildAgentReport(report, {
+      const current = currentForDiff(report);
+      agent = buildAgentReport(current, {
         version: VERSION,
         exitCode,
-        diff: { result: diffReports(report, previous), previous },
+        diff: { result: diffReports(current, previous), previous },
       });
     } else {
       agent = buildAgentReport(report, { version: VERSION, exitCode });
     }
     return structured(cleanReport(agent) as unknown as Record<string, unknown>, UNTRUSTED_NOTICE);
   } catch (err) {
-    return toolError(`audit failed: ${err instanceof Error ? err.message : String(err)}`);
+    // Error text can quote the site (a header, a URL), so it is cleaned like a finding.
+    const message = err instanceof Error ? err.message : String(err);
+    return toolError(`audit failed: ${cleanString(message, MAX_TEXT_CHARS)}`);
   } finally {
     inFlight = false;
   }

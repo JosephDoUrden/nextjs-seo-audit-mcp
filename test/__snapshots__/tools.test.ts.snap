@@ -201,7 +201,6 @@ exports[`tools/list > matches the snapshot 1`] = `
         "previous": {
           "description": "An earlier audit_site result (its structuredContent), to compare against. The result then has a \`diff\` with new and resolved findings.",
           "properties": {
-            "diff": {},
             "exitCode": {
               "maximum": 9007199254740991,
               "minimum": -9007199254740991,
@@ -450,6 +449,7 @@ exports[`tools/list > matches the snapshot 1`] = `
                 ],
                 "type": "string",
               },
+              "maxItems": 32,
               "type": "array",
             },
             "summary": {

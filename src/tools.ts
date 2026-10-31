@@ -32,9 +32,12 @@ export const LIMITS = {
   wallClockBaseMs: 120_000,
   /** Added per crawled page. */
   wallClockPerPageMs: 2000,
-  /** Cap on `previous.findings` and each `previous.diff` list. */
+  /** Cap on `previous.findings`. */
   previousMaxFindings: 2000,
   previousMaxChars: 4096,
+  previousMaxSkipped: 32,
+  /** Passed to runAudit as `maxHtmlBytes` once vercel-seo-audit supports it. */
+  maxHtmlBytes: 2 * 1024 * 1024,
 } as const;
 
 export const USER_AGENTS = ['default', 'googlebot', 'bingbot'] as const;
@@ -80,14 +83,17 @@ const previousFinding = agentFinding.extend({
   url: boundedString.nullable(),
   fix: boundedString.nullable(),
 });
+// `diff` is left out: a key the schema does not name is dropped when the input is parsed, so
+// an earlier result's diff is ignored rather than read. `details` is capped by the handler.
+const { diff: _diff, ...previousShape } = agentReportShape;
 const previousReport = z
   .object({
-    ...agentReportShape,
+    ...previousShape,
     version: boundedString,
     url: boundedString,
     finalUrl: boundedString.nullable(),
     findings: z.array(previousFinding).max(LIMITS.previousMaxFindings),
-    diff: z.unknown().optional(),
+    skipped: z.array(moduleId).max(LIMITS.previousMaxSkipped),
   })
   .describe(
     'An earlier audit_site result (its structuredContent), to compare against. The result then has a `diff` with new and resolved findings.',

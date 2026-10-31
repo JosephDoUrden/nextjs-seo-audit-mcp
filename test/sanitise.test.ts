@@ -5,25 +5,45 @@ import { UNSAFE, allStrings } from './helpers.js';
 
 describe('sanitise', () => {
   it('strips C0, DEL, C1 and bidi characters', () => {
-    expect(cleanString('a\u0000b\u0007c\u007fd\u0085e‮f⁦g‏h')).toBe('abcdefgh');
+    expect(cleanString('a\u0000b\u0007c\u007fd\u0085e\u202ef\u2066g\u200fh')).toBe('abcdefgh');
   });
 
   it('turns tab and newlines into spaces', () => {
     expect(cleanString('one\ntwo\tthree\r\nfour')).toBe('one two three  four');
   });
 
+  it('turns the Unicode line and paragraph separators into spaces', () => {
+    expect(cleanString('one\u2028two\u2029three')).toBe('one two three');
+  });
+
+  it('strips format characters: zero-width, BOM, soft hyphen, ALM and the tag block', () => {
+    const tags = [...'ignore'].map((c) => String.fromCodePoint(0xe0000 + c.charCodeAt(0))).join('');
+    const input = `a\u200bb\u200cc\u200dd\ufeffe\u00adf\u061cg\u{E0001}${tags}\u{E007F}h\u{E0000}i`;
+    expect(cleanString(input)).toBe('abcdefghi');
+    expect(UNSAFE.test(cleanString(input))).toBe(false);
+  });
+
+  it('keeps ordinary text, accents and emoji', () => {
+    expect(cleanString('Café — naïve 日本語 🙂')).toBe('Café — naïve 日本語 🙂');
+  });
+
   it('cleans keys and nested values', () => {
-    const out = cleanDeep({ 'k‮': ['v\u0001', { deep: 'x⁧y' }], n: 3, b: null });
+    const out = cleanDeep({ 'k\u202e': ['v\u0001', { deep: 'x\u2067y' }], n: 3, b: null });
     expect(out).toEqual({ k: ['v', { deep: 'xy' }], n: 3, b: null });
     expect(allStrings(out).some((s) => UNSAFE.test(s))).toBe(false);
   });
 
   it('caps message and fix at 500 characters', () => {
     const long = 'x'.repeat(2000);
-    const out = capFinding({ message: long, fix: long });
+    const out = capFinding({ message: long, fix: long, url: null });
     expect(out.message).toHaveLength(MAX_TEXT_CHARS);
     expect(out.fix).toHaveLength(MAX_TEXT_CHARS);
-    expect(capFinding({ message: 'm', fix: null }).fix).toBeNull();
+    expect(capFinding({ message: 'm', fix: null, url: null }).fix).toBeNull();
+  });
+
+  it('caps url at 2048 characters', () => {
+    const out = capFinding({ message: 'm', fix: null, url: `https://example.com/${'a'.repeat(3000)}` });
+    expect(out.url).toHaveLength(2048);
   });
 });
 

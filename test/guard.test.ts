@@ -31,6 +31,18 @@ describe('guard', () => {
     'http://[::ffff:127.0.0.1]/',
     'http://[fd00::1]/',
     'http://[fe80::1]/',
+    'http://[fec0::1]/',
+    'http://[::ffff:0:a9fe:a9fe]/',
+    'http://[::ffff:0:169.254.169.254]/',
+    'http://[64:ff9b::a9fe:a9fe]/',
+    'http://[64:ff9b::10.0.0.1]/',
+    'http://[2002:a9fe:a9fe::1]/',
+    'http://[2002:7f00:1::]/',
+    'http://198.18.0.1/',
+    'http://198.19.255.255/',
+    'http://240.0.0.1/',
+    'http://255.255.255.255/',
+    'http://0.1.2.3/',
   ])('refuses the literal private address %s without a lookup', async (url) => {
     const result = await checkTarget(url);
     expect(result.ok).toBe(false);
@@ -71,9 +83,14 @@ describe('guard', () => {
     expect((await checkTarget('https://example.com/')).ok).toBe(true);
   });
 
-  it('leaves a failed lookup to the audit', async () => {
-    lookup.mockRejectedValue(Object.assign(new Error('getaddrinfo ENOTFOUND'), { code: 'ENOTFOUND' }));
-    expect((await checkTarget('https://nope.example/')).ok).toBe(true);
+  it.each(['ENOTFOUND', 'EAI_AGAIN', 'ESERVFAIL'])('refuses a name whose lookup fails with %s', async (code) => {
+    lookup.mockRejectedValue(Object.assign(new Error(`getaddrinfo ${code}`), { code }));
+    expect(await checkTarget('https://nope.example/')).toEqual({ ok: false, reason: 'could not resolve nope.example' });
+  });
+
+  it('refuses a name with no answers', async () => {
+    lookup.mockResolvedValue([]);
+    expect((await checkTarget('https://empty.example/')).ok).toBe(false);
   });
 
   it('allows private addresses with NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE=1', async () => {

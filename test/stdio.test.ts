@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import type { ChildProcess } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -32,7 +32,8 @@ describe('stdio', () => {
   it('writes only JSON-RPC frames to stdout, even when something calls console.log', async () => {
     // Preloaded before the server: logs to stdout once the server is up, which the
     // console.log pin in index.ts has to send to stderr instead.
-    const stray = 'data:text/javascript,setTimeout(()=>{console.log("stray");console.info("stray")},200)';
+    const stray =
+      'data:text/javascript,setTimeout(()=>{console.log("stray");console.info("stray");console.debug("stray");console.dir("dir-stray")},200)';
     const transport = new SpiedTransport({
       command: process.execPath,
       args: ['--import', stray, entry],
@@ -61,5 +62,38 @@ describe('stdio', () => {
       expect(frame.jsonrpc).toBe('2.0');
     }
     expect(Buffer.concat(stderr).toString('utf8')).toContain('stray');
+    expect(Buffer.concat(stderr).toString('utf8')).toContain('dir-stray');
   }, 60_000);
+
+  /** Starts the built server with plain pipes, and resolves with its exit code. */
+  function spawnServer(): { child: ChildProcess; exited: Promise<number | null> } {
+    const child = spawn(process.execPath, [entry], { stdio: ['pipe', 'pipe', 'pipe'] });
+    const exited = new Promise<number | null>((resolve) => child.on('exit', (code) => resolve(code)));
+    return { child, exited };
+  }
+
+  const initialize = `${JSON.stringify({
+    jsonrpc: '2.0',
+    id: 1,
+    method: 'initialize',
+    params: { protocolVersion: '2025-11-25', capabilities: {}, clientInfo: { name: 't', version: '0' } },
+  })}\n`;
+
+  it('exits 0 when stdin reaches EOF', async () => {
+    const { child, exited } = spawnServer();
+    child.stdin?.write(initialize);
+    await new Promise<void>((resolve) => child.stdout?.once('data', () => resolve()));
+    child.stdin?.end();
+    expect(await exited).toBe(0);
+  }, 20_000);
+
+  it('exits 0 quietly when the client closes stdout and a write fails with EPIPE', async () => {
+    const { child, exited } = spawnServer();
+    const stderr: Buffer[] = [];
+    child.stderr?.on('data', (c: Buffer) => stderr.push(c));
+    child.stdout?.destroy();
+    child.stdin?.write(initialize);
+    expect(await exited).toBe(0);
+    expect(Buffer.concat(stderr).toString('utf8')).not.toMatch(/EPIPE|Error/);
+  }, 20_000);
 });
