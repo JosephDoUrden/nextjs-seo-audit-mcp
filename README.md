@@ -13,7 +13,12 @@ The checks come from the [vercel-seo-audit](https://github.com/JosephDoUrden/ver
 which this package depends on as `vercel-seo-audit@^2.17.0` until it is renamed to
 `nextjs-seo-audit` at 3.0.0.
 
-It is stdio only and read-only. It fetches the URL you give it and nothing else on your machine.
+It is stdio only and read-only: it never writes files. It fetches the URL you give it, then
+follows what that site points to, the same way the CLI does: redirects, `robots.txt`, the
+sitemap and the URLs in it (with `crawl`), and the canonical, image and Open Graph URLs on the
+page. Private addresses are refused up front for the URL you pass, and for every later request
+the CLI refuses literal private addresses; refusing names that resolve to private addresses at
+connect time comes with the CLI fix that is on its way.
 
 ## Install
 
@@ -122,8 +127,10 @@ By default `audit_site` refuses:
   (including `169.254.169.254`), `0.0.0.0/8`, benchmarking (`198.18.0.0/15`), reserved
   (`240.0.0.0/4`), IPv6 unique-local, link-local and site-local (`fec0::/10`) addresses, and IPv6
   forms that carry a private IPv4 address (mapped `::ffff:`, translated `::ffff:0:`, NAT64
-  `64:ff9b::/96`, 6to4 `2002::/16`), in any spelling
-  `new URL()` accepts (`2130706433`, `0x7f.1`, `[::ffff:127.0.0.1]`);
+  `64:ff9b::/96`, 6to4 `2002::/16`). `new URL()` turns the other spellings it accepts into
+  these first, so decimal (`2130706433`), hex (`0x7f.0.0.1`), octal (`0177.0.0.1`), short
+  (`127.1`, `0x7f.1`), trailing-dot (`localhost.`) and IPv6 forms such as `[::ffff:127.0.0.1]`
+  and `[64:ff9b::169.254.169.254]` are refused too;
 - a host name whose DNS answers include any such address (checked with `dns.lookup(host, { all: true })`
   before the audit);
 - a host name that does not resolve at all (`could not resolve`), since a name that fails the
@@ -155,10 +162,12 @@ Only the exact value `1` turns it on.
 
 ## Configuration
 
-None. The only environment variables it may read are `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE` and
-`NO_COLOR` (a test holds it to that; output has no colour anyway), and it reads no files: `.seoauditrc.json` and `.seoauditignore` in the working directory are not
-loaded, so a repo you open cannot change what the agent audits. Pass `only` and `ignore` per call
-instead.
+None. The server's own code reads one environment variable,
+`NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE`. Node and the dependencies read a few more of their own
+as they load or run, such as `FORCE_COLOR`, `NO_COLOR` and `UNDICI_NO_FG`; none of them changes
+what is audited or where requests go, and a test lists every key read during a full run. It reads
+no files: `.seoauditrc.json` and `.seoauditignore` in the working directory are not loaded, so a
+repo you open cannot change what the agent audits. Pass `only` and `ignore` per call instead.
 
 ## What it does not do
 

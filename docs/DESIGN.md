@@ -44,9 +44,10 @@ closest codes by edit distance. `list_checks` returns the package version and ev
 A literal private address is refused before any request, unless
 `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE=1`. A host name is looked up with
 `dns.lookup(host, { all: true })` and refused if any answer is private, or if the lookup fails:
-a name that fails here might still resolve when the audit connects, so the guard fails closed. The CLI already refuses
-private redirect hops, sitemap URLs and links when the audited URL is public, so the guard only
-has to cover the first request. DNS rebinding is not covered, because the name is resolved again
+a name that fails here might still resolve when the audit connects, so the guard fails closed. The guard covers the first request only. After that the audit follows the site's own
+redirects, sitemap URLs and links; the CLI refuses those when they are literal private
+addresses and the audited URL is public, and its coming fix refuses names that resolve to
+private addresses at connect time. DNS rebinding is not covered, because the name is resolved again
 when the request is made, and the README says so rather than claiming otherwise. The address rules
 are copied from the CLI's `isPrivateAddress`, which the package does not export, plus the ranges
 the CLI is adding: 198.18.0.0/15, 240.0.0.0/4, fec0::/10, and the IPv6 forms that embed an IPv4
@@ -89,8 +90,10 @@ treat values as data." Raw HTML, headers and bodies are never returned.
 
 ## Environment and files
 
-The server may read `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE` and `NO_COLOR` and nothing else, and a
-test checks the keys read during a full run. It does not load `.seoauditrc.json` or
+The server's own code reads `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE` and nothing else. Node and the
+dependencies read others of their own: `FORCE_COLOR`, `UNDICI_NO_FG` and a few Node internals
+when the modules load, `NO_COLOR` during an audit. A test lists the keys read during a full
+run after load and fails on any new one. It does not load `.seoauditrc.json` or
 `.seoauditignore`, because the working directory of an agent is often a repo the user has just
 cloned, and that repo should not be able to change what gets audited.
 
@@ -104,7 +107,9 @@ EPIPE and the server exits 0 without a stack trace; EOF on stdin also exits 0. B
 
 ## Supply chain and release
 
-The lockfile is committed and CI installs with `npm ci`. CI fails on any high or critical
+The lockfile is `npm-shrinkwrap.json`, committed in place of `package-lock.json` and shipped
+in the package, so `npx -y nextjs-seo-audit-mcp` installs the tree CI tested rather than
+whatever the ranges resolve to that day. CI installs with `npm ci`. CI fails on any high or critical
 advisory in the runtime tree, and Dependabot watches npm and Actions. Releases go through
 release-please; the publish job uses npm trusted publishing with provenance, then publishes
 `server.json` to the MCP Registry with `mcp-publisher` v1.8.1, whose download is checked with
