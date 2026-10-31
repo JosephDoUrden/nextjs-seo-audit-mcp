@@ -10,7 +10,7 @@
       "license": "MIT",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.32.0",
-        "vercel-seo-audit": "^2.17.0",
+        "vercel-seo-audit": "^2.19.0",
         "zod": "^4.6.7"
       },
       "bin": {
@@ -2912,21 +2912,23 @@
       }
     },
     "node_modules/vercel-seo-audit": {
-      "version": "2.17.0",
-      "resolved": "https://registry.npmjs.org/vercel-seo-audit/-/vercel-seo-audit-2.17.0.tgz",
-      "integrity": "sha512-fM3lrywkGFrX5AhaKKxwUXX6s8WPXU/KpUYHc3mDOJQHLED10WNsIQ+rOaUen3bHbH02MPd+jkSJ1H+WN2M7aw==",
+      "version": "2.19.0",
+      "resolved": "https://registry.npmjs.org/vercel-seo-audit/-/vercel-seo-audit-2.19.0.tgz",
+      "integrity": "sha512-nC+5p0szE4POId76f+zenSJZlBmsIZVtky3mVsOOjl6KFjdvCwuqXxE7gr2kFX7olJu3qZhEDo21qHcLrQemUA==",
       "license": "MIT",
       "dependencies": {
         "chalk": "^5.3.0",
         "cheerio": "^1.2.0",
         "commander": "^15.0.0",
-        "fast-xml-parser": "^5.11.2"
+        "fast-xml-parser": "^5.11.2",
+        "htmlparser2": "^10.1.0",
+        "undici": "^7.30.1"
       },
       "bin": {
         "vercel-seo-audit": "bin/vercel-seo-audit.js"
       },
       "engines": {
-        "node": ">=20.0.0"
+        "node": ">=20.18.1"
       }
     },
     "node_modules/vite": {
