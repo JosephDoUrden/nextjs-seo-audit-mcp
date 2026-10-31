@@ -39,10 +39,9 @@ const USER_AGENT_STRINGS: Record<(typeof USER_AGENTS)[number], string | undefine
   bingbot: 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)',
 };
 
-// `maxHtmlBytes` is coming to RunAuditOptions in a vercel-seo-audit release after 2.17.0.
-// The intersection compiles against either version, and 2.17.0 ignores the key at run time,
-// where its own 10 MiB cap applies instead.
-type AuditOptions = RunAuditOptions & { maxHtmlBytes?: number };
+// vercel-seo-audit 2.19.0 added `maxHtmlBytes` to RunAuditOptions; the alias stays so the
+// call site below reads the same as before.
+type AuditOptions = RunAuditOptions;
 
 export interface AuditSiteArgs {
   url: string;

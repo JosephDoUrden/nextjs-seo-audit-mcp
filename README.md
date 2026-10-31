@@ -10,7 +10,7 @@ indexing problems (redirects, robots.txt, sitemap, canonicals, `noindex`, metada
 same JSON the CLI prints with `--format agent`.
 
 The checks come from the [vercel-seo-audit](https://github.com/JosephDoUrden/vercel-seo-audit) CLI,
-which this package depends on as `vercel-seo-audit@^2.17.0` until it is renamed to
+which this package depends on as `vercel-seo-audit@^2.19.0` until it is renamed to
 `nextjs-seo-audit` at 3.0.0.
 
 It is stdio only and read-only: it never writes files. It fetches the URL you give it, then

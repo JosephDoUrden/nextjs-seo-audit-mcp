@@ -69,8 +69,7 @@ longer than the TypeScript SDK client's 60 s default request timeout; that is de
 crawl needs it, and the README tells users to raise the client's timeout.
 
 Memory per audit is bounded by asking `runAudit` to read at most 2 MiB of each HTML response
-(`maxHtmlBytes`). vercel-seo-audit 2.17.0 does not have that option yet and ignores it, so its
-own 10 MiB cap applies until the release that adds it.
+(`maxHtmlBytes`), supported by vercel-seo-audit since 2.19.0.
 
 `previous` is bounded in full: strings to 4096 characters, 2000 findings, 32 `skipped` ids, and
 `details` capped like the output. Its `diff` is not in the schema, so it is dropped on parse.

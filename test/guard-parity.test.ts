@@ -56,8 +56,6 @@ const TABLE: [string, boolean][] = [
 
 // The CLI is adding the same ranges. Until a release has them, its copy disagrees on those
 // rows by design, so the parity check waits for it rather than failing.
-const cliHasNewRanges =
-  cli.isPrivateAddress('198.18.0.1') && cli.isPrivateAddress('[64:ff9b::a9fe:a9fe]') && cli.isPrivateAddress('[fec0::1]');
 
 describe('isPrivateAddress', () => {
   it('has a 40-row table', () => {
@@ -68,8 +66,8 @@ describe('isPrivateAddress', () => {
     expect(isPrivateAddress(host)).toBe(expected);
   });
 
-  it.skipIf(!cliHasNewRanges)(
-    'agrees with the CLI copy on every row (skipped until vercel-seo-audit ships the 198.18/15, 240/4, NAT64, 6to4, translated and site-local ranges)',
+  it(
+    'agrees with the CLI copy on every row',
     () => {
       const differ = TABLE.filter(([host]) => isPrivateAddress(host) !== cli.isPrivateAddress(host)).map(([h]) => h);
       expect(differ).toEqual([]);
