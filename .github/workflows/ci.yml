@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  INSPECTOR: "@modelcontextprotocol/inspector@2.13.0"
+  CONFORMANCE: "@modelcontextprotocol/conformance@0.1.16"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [22, 24]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - name: Full audit (informational)
+        continue-on-error: true
+        run: npm audit
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+
+      # The Inspector CLI talks to the built server over stdio, like a real client would.
+      - name: Inspector, tools/list with schema portability checks
+        run: npx -y "$INSPECTOR" --cli node dist/index.js --method tools/list --strict
+      - name: Inspector, explain_finding
+        run: npx -y "$INSPECTOR" --cli node dist/index.js --method tools/call --tool-name explain_finding --tool-arg code=NOINDEX_DETECTED -q
+      # An unknown code is a tool error (isError), which the Inspector CLI exits 5 on.
+      - name: Inspector, explain_finding with an unknown code exits 5
+        run: |
+          set +e
+          npx -y "$INSPECTOR" --cli node dist/index.js --method tools/call --tool-name explain_finding --tool-arg code=NOPE -q
+          status=$?
+          echo "exit=$status"
+          test "$status" -eq 5
+
+      # The conformance suite only speaks HTTP, so the same server is mounted on Streamable
+      # HTTP by test/conformance-shim.ts for this step. Only the scenarios that apply to a
+      # tools-only server are run; the rest need the suite's reference tools.
+      - name: Start the conformance shim
+        run: |
+          node --experimental-strip-types test/conformance-shim.ts > shim.log 2>&1 &
+          for _ in $(seq 1 50); do
+            grep -q '^MCP_URL=' shim.log && break
+            sleep 0.2
+          done
+          grep '^MCP_URL=' shim.log >> "$GITHUB_ENV" || { cat shim.log; exit 1; }
+      - name: Conformance
+        run: |
+          for scenario in server-initialize ping tools-list dns-rebinding-protection; do
+            npx -y "$CONFORMANCE" server --url "$MCP_URL" --scenario "$scenario"
+          done
+
+  # One stable check name for the branch ruleset to require. Matrix legs rename themselves when the
+  # matrix changes, so the ruleset points at this job only. It fails unless every build leg succeeded.
+  gate:
+    name: gate
+    if: always()
+    needs: [build]
+    runs-on: ubuntu-latest
+    env:
+      BUILD: ${{ needs.build.result }}
+    steps:
+      - run: |
+          echo "build=$BUILD"
+          test "$BUILD" = success
