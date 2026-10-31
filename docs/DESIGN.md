@@ -7,7 +7,9 @@ Decided 31 Oct 2026. This is the reasoning behind the shape of v0.1; change it b
 The server is a thin wrapper over the `vercel-seo-audit` library API (`runAudit`,
 `buildAgentReport`, `diffReports`, `describeCode`). It lives in its own repo and npm package so the
 CLI does not grow an MCP dependency, and so the server can be versioned against the SDK on its own
-schedule. It is ESM, needs Node 22 or newer, and uses `@modelcontextprotocol/sdk` 1.32 or newer.
+schedule. It is published as `nextjs-seo-audit-mcp` (renamed from `vercel-seo-audit-mcp` before
+its first release, 31 Oct 2026), since most checks are about Next.js rather than Vercel; the CLI
+follows at 3.0.0, and the output schema accepts both `tool` names until then. It is ESM, needs Node 22 or newer, and uses `@modelcontextprotocol/sdk` 1.32 or newer.
 
 There are three tools: `audit_site`, `explain_finding` and `list_checks`. There is no separate
 page tool, because `audit_site` with `only` covers it. There is no diff tool either: `audit_site`
@@ -40,7 +42,7 @@ closest codes by edit distance. `list_checks` returns the package version and ev
 ## SSRF guard
 
 A literal private address is refused before any request, unless
-`VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE=1`. A host name is looked up with
+`NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE=1`. A host name is looked up with
 `dns.lookup(host, { all: true })` and refused if any answer is private. The CLI already refuses
 private redirect hops, sitemap URLs and links when the audited URL is public, so the guard only
 has to cover the first request. DNS rebinding is not covered, because the name is resolved again
@@ -66,7 +68,7 @@ treat values as data." Raw HTML, headers and bodies are never returned.
 
 ## Environment and files
 
-The server may read `VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE` and `NO_COLOR` and nothing else, and a
+The server may read `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE` and `NO_COLOR` and nothing else, and a
 test checks the keys read during a full run. It does not load `.seoauditrc.json` or
 `.seoauditignore`, because the working directory of an agent is often a repo the user has just
 cloned, and that repo should not be able to change what gets audited.
@@ -85,7 +87,7 @@ advisory in the runtime tree, and Dependabot watches npm and Actions. Releases g
 release-please; the publish job uses npm trusted publishing with provenance, then publishes
 `server.json` to the MCP Registry with `mcp-publisher` v1.8.1, whose download is checked with
 cosign first. `server.json` uses the 2025-12-11 schema, names the server
-`io.github.JosephDoUrden/vercel-seo-audit`, and `package.json` carries the matching `mcpName`.
+`io.github.JosephDoUrden/nextjs-seo-audit`, and `package.json` carries the matching `mcpName`.
 
 ## Conformance
 

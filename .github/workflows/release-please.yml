@@ -64,7 +64,7 @@ jobs:
       - name: Publish to npm
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          if npm view "vercel-seo-audit-mcp@${VERSION}" version >/dev/null 2>&1; then
+          if npm view "nextjs-seo-audit-mcp@${VERSION}" version >/dev/null 2>&1; then
             echo "::warning::v${VERSION} already published, skipping."
           else
             npm publish --provenance --access public

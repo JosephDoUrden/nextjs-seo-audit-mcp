@@ -1,13 +1,17 @@
-# vercel-seo-audit-mcp
+# nextjs-seo-audit-mcp
 
-[![npm version](https://img.shields.io/npm/v/vercel-seo-audit-mcp.svg)](https://www.npmjs.com/package/vercel-seo-audit-mcp)
-[![CI](https://github.com/JosephDoUrden/vercel-seo-audit-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JosephDoUrden/vercel-seo-audit-mcp/actions/workflows/ci.yml)
-[![licence](https://img.shields.io/npm/l/vercel-seo-audit-mcp.svg)](./LICENSE)
+[![npm version](https://img.shields.io/npm/v/nextjs-seo-audit-mcp.svg)](https://www.npmjs.com/package/nextjs-seo-audit-mcp)
+[![CI](https://github.com/JosephDoUrden/nextjs-seo-audit-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/JosephDoUrden/nextjs-seo-audit-mcp/actions/workflows/ci.yml)
+[![licence](https://img.shields.io/npm/l/nextjs-seo-audit-mcp.svg)](./LICENSE)
 
-An MCP server for [vercel-seo-audit](https://github.com/JosephDoUrden/vercel-seo-audit). It lets a
-coding agent audit a deployed site for SEO and indexing problems (redirects, robots.txt, sitemap,
-canonicals, `noindex`, metadata streamed into `<body>`, preview deployments left indexable, and the
-rest of the CLI's checks) and read back the same JSON the CLI prints with `--format agent`.
+Next.js SEO Audit as an MCP server. It lets a coding agent audit a deployed site for SEO and
+indexing problems (redirects, robots.txt, sitemap, canonicals, `noindex`, metadata streamed into
+`<body>`, preview deployments left indexable, and the rest of the CLI's checks) and read back the
+same JSON the CLI prints with `--format agent`.
+
+The checks come from the [vercel-seo-audit](https://github.com/JosephDoUrden/vercel-seo-audit) CLI,
+which this package depends on as `vercel-seo-audit@^2.17.0` until it is renamed to
+`nextjs-seo-audit` at 3.0.0.
 
 It is stdio only and read-only. It fetches the URL you give it and nothing else on your machine.
 
@@ -16,7 +20,7 @@ It is stdio only and read-only. It fetches the URL you give it and nothing else 
 Claude Code:
 
 ```bash
-claude mcp add vercel-seo-audit -- npx -y vercel-seo-audit-mcp
+claude mcp add nextjs-seo-audit -- npx -y nextjs-seo-audit-mcp
 ```
 
 or in `.mcp.json`:
@@ -24,9 +28,9 @@ or in `.mcp.json`:
 ```json
 {
   "mcpServers": {
-    "vercel-seo-audit": {
+    "nextjs-seo-audit": {
       "command": "npx",
-      "args": ["-y", "vercel-seo-audit-mcp"]
+      "args": ["-y", "nextjs-seo-audit-mcp"]
     }
   }
 }
@@ -37,9 +41,9 @@ Cursor, in `.cursor/mcp.json` (same shape):
 ```json
 {
   "mcpServers": {
-    "vercel-seo-audit": {
+    "nextjs-seo-audit": {
       "command": "npx",
-      "args": ["-y", "vercel-seo-audit-mcp"]
+      "args": ["-y", "nextjs-seo-audit-mcp"]
     }
   }
 }
@@ -48,9 +52,9 @@ Cursor, in `.cursor/mcp.json` (same shape):
 Codex reads TOML, in `~/.codex/config.toml`:
 
 ```toml
-[mcp_servers.vercel-seo-audit]
+[mcp_servers.nextjs-seo-audit]
 command = "npx"
-args = ["-y", "vercel-seo-audit-mcp"]
+args = ["-y", "nextjs-seo-audit-mcp"]
 ```
 
 Node 22 or newer.
@@ -124,10 +128,10 @@ To audit a local dev server, start the server with the flag set:
 ```json
 {
   "mcpServers": {
-    "vercel-seo-audit": {
+    "nextjs-seo-audit": {
       "command": "npx",
-      "args": ["-y", "vercel-seo-audit-mcp"],
-      "env": { "VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE": "1" }
+      "args": ["-y", "nextjs-seo-audit-mcp"],
+      "env": { "NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE": "1" }
     }
   }
 }
@@ -137,7 +141,7 @@ Only the exact value `1` turns it on.
 
 ## Configuration
 
-None. The only environment variables it may read are `VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE` and
+None. The only environment variables it may read are `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE` and
 `NO_COLOR` (a test holds it to that; output has no colour anyway), and it reads no files: `.seoauditrc.json` and `.seoauditignore` in the working directory are not
 loaded, so a repo you open cannot change what the agent audits. Pass `only` and `ignore` per call
 instead.

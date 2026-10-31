@@ -36,7 +36,7 @@ describe('stdio', () => {
     const transport = new SpiedTransport({
       command: process.execPath,
       args: ['--import', stray, entry],
-      env: { ...getDefaultEnvironment(), VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE: '1' },
+      env: { ...getDefaultEnvironment(), NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE: '1' },
       stderr: 'pipe',
     });
     const stderr: Buffer[] = [];

@@ -1,7 +1,7 @@
 import { lookup } from 'node:dns/promises';
 
 /** The one switch that lets audit_site reach a private address, for auditing a local dev server. */
-export const ALLOW_PRIVATE_ENV = 'VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE';
+export const ALLOW_PRIVATE_ENV = 'NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE';
 
 export function allowPrivate(): boolean {
   return process.env[ALLOW_PRIVATE_ENV] === '1';
@@ -55,7 +55,7 @@ const IP_LITERAL = /^(\d+\.\d+\.\d+\.\d+|\[.*\])$/;
 /**
  * Decides whether audit_site may fetch `input`. Refuses a non-http(s) URL, a literal private
  * address, and a name whose DNS answers include any private address, unless
- * VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE=1.
+ * NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE=1.
  *
  * Not covered: DNS rebinding. The name is looked up again when the request is made and can
  * answer differently then. vercel-seo-audit itself refuses redirects, sitemap URLs and links

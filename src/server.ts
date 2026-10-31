@@ -13,7 +13,7 @@ import { SERVER_VERSION } from './version.js';
 
 /** The server with its three tools. index.ts puts it on stdio; the conformance shim on HTTP. */
 export function createServer(): McpServer {
-  const server = new McpServer({ name: 'vercel-seo-audit-mcp', version: SERVER_VERSION });
+  const server = new McpServer({ name: 'nextjs-seo-audit-mcp', title: 'Next.js SEO Audit', version: SERVER_VERSION });
 
   server.registerTool(
     'audit_site',

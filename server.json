@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
-  "name": "io.github.JosephDoUrden/vercel-seo-audit",
-  "title": "vercel-seo-audit",
-  "description": "Read-only SEO and indexing audit of a deployed site, aimed at Next.js on Vercel",
+  "name": "io.github.JosephDoUrden/nextjs-seo-audit",
+  "title": "Next.js SEO Audit",
+  "description": "Read-only SEO and indexing audit of a deployed site, aimed at Next.js",
   "repository": {
-    "url": "https://github.com/JosephDoUrden/vercel-seo-audit-mcp",
+    "url": "https://github.com/JosephDoUrden/nextjs-seo-audit-mcp",
     "source": "github"
   },
   "version": "0.1.0",
   "packages": [
     {
       "registryType": "npm",
-      "identifier": "vercel-seo-audit-mcp",
+      "identifier": "nextjs-seo-audit-mcp",
       "version": "0.1.0",
       "runtimeHint": "npx",
       "transport": {
@@ -19,7 +19,7 @@
       },
       "environmentVariables": [
         {
-          "name": "VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE",
+          "name": "NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE",
           "description": "Set to 1 to let audit_site reach private and local addresses, for a local dev server",
           "isRequired": false,
           "isSecret": false

@@ -8,7 +8,7 @@ const { auditSite } = await import('../src/handlers.js');
 
 describe('guard', () => {
   beforeEach(() => {
-    vi.stubEnv('VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE', '');
+    vi.stubEnv('NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE', '');
     lookup.mockReset();
   });
   afterEach(() => {
@@ -76,14 +76,14 @@ describe('guard', () => {
     expect((await checkTarget('https://nope.example/')).ok).toBe(true);
   });
 
-  it('allows private addresses with VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE=1', async () => {
-    vi.stubEnv('VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE', '1');
+  it('allows private addresses with NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE=1', async () => {
+    vi.stubEnv('NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE', '1');
     expect((await checkTarget('http://127.0.0.1:3000/')).ok).toBe(true);
     expect(lookup).not.toHaveBeenCalled();
   });
 
   it('does not treat other values of the flag as on', async () => {
-    vi.stubEnv('VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE', 'true');
+    vi.stubEnv('NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE', 'true');
     expect((await checkTarget('http://127.0.0.1/')).ok).toBe(false);
   });
 

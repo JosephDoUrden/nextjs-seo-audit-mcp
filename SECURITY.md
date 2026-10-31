@@ -11,7 +11,7 @@ Fixes ship in the next patch release on npm.
 ## Reporting a vulnerability
 
 Do not open a public issue. Use
-[GitHub's private vulnerability reporting](https://github.com/JosephDoUrden/vercel-seo-audit-mcp/security/advisories/new)
+[GitHub's private vulnerability reporting](https://github.com/JosephDoUrden/nextjs-seo-audit-mcp/security/advisories/new)
 on this repository (Security tab, "Report a vulnerability"). If that is not an option, email the
 maintainer (see the `author` field in `package.json`).
 
@@ -26,7 +26,7 @@ public disclosure.
   process already has the machine. `test/conformance-shim.ts` mounts it on HTTP for CI only and is
   not published.
 - `audit_site` makes outbound requests to the URL it is given. Private and local addresses are
-  refused unless `VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE=1`; DNS rebinding is a known gap, described in
+  refused unless `NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE=1`; DNS rebinding is a known gap, described in
   the README.
 - Results are content from a third-party site. They are cleaned of control and bidi characters and
   capped, but a client must still treat them as data.

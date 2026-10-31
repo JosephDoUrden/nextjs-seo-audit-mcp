@@ -3,7 +3,7 @@
   "release-type": "node",
   "packages": {
     ".": {
-      "package-name": "vercel-seo-audit-mcp",
+      "package-name": "nextjs-seo-audit-mcp",
       "changelog-path": "CHANGELOG.md",
       "bump-minor-pre-major": true,
       "bump-patch-for-minor-pre-major": true,

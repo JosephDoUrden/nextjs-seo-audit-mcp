@@ -38,7 +38,7 @@ describe('audit_site against a local fixture', () => {
 
   beforeAll(async () => {
     // The fixture is on 127.0.0.1, so the private-address guard is switched off for this file only.
-    vi.stubEnv('VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE', '1');
+    vi.stubEnv('NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE', '1');
     fixture = await startFixture();
     ({ client, close } = await connectClient());
   });
@@ -143,7 +143,7 @@ describe('audit_site against a local fixture', () => {
     }
   });
 
-  it('reads only VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE and NO_COLOR from the environment', async () => {
+  it('reads only NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE and NO_COLOR from the environment', async () => {
     const read = new Set<string>();
     const real = process.env;
     process.env = new Proxy(real, {
@@ -161,7 +161,7 @@ describe('audit_site against a local fixture', () => {
     } finally {
       process.env = real;
     }
-    expect([...read].filter((k) => !['VERCEL_SEO_AUDIT_MCP_ALLOW_PRIVATE', 'NO_COLOR'].includes(k))).toEqual([]);
+    expect([...read].filter((k) => !['NEXTJS_SEO_AUDIT_MCP_ALLOW_PRIVATE', 'NO_COLOR'].includes(k))).toEqual([]);
   });
 
   it('rejects out-of-range input as a tool error', async () => {

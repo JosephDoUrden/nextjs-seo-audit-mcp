@@ -1,8 +1,8 @@
 # Contributing
 
 ```bash
-git clone https://github.com/<your-username>/vercel-seo-audit-mcp.git
-cd vercel-seo-audit-mcp
+git clone https://github.com/<your-username>/nextjs-seo-audit-mcp.git
+cd nextjs-seo-audit-mcp
 npm ci
 npm run build
 npm test
