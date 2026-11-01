@@ -1,6 +1,6 @@
 {
   "name": "nextjs-seo-audit-mcp",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Next.js SEO Audit: read-only MCP server (stdio) that audits a deployed site for SEO and indexing issues from an agent, built on vercel-seo-audit",
   "type": "module",
   "mcpName": "io.github.JosephDoUrden/nextjs-seo-audit",
