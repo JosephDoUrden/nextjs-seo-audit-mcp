@@ -35,7 +35,9 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN }}
+          # A personal token makes CI start on the release PR by itself. Without one the
+          # workflow token is used and CI is run on that branch by hand (see ci.yml).
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || github.token }}
 
   # Unprivileged: builds, tests and packs the tarball the publish job uploads. The npm cache
   # lives here, never in the job that holds the OIDC token.
