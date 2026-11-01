@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/JosephDoUrden/nextjs-seo-audit-mcp/compare/nextjs-seo-audit-mcp-v0.1.1...nextjs-seo-audit-mcp-v0.1.2) (2026-11-01)
+
+
+### Bug Fixes
+
+* **ci:** wait for the npm version before registering it with the MCP Registry ([#5](https://github.com/JosephDoUrden/nextjs-seo-audit-mcp/issues/5)) ([aabc9b9](https://github.com/JosephDoUrden/nextjs-seo-audit-mcp/commit/aabc9b9a377502377d1100c41d0b485552b7b439))
+
 ## [0.1.1](https://github.com/JosephDoUrden/nextjs-seo-audit-mcp/compare/nextjs-seo-audit-mcp-v0.1.0...nextjs-seo-audit-mcp-v0.1.1) (2026-11-01)
 
 
